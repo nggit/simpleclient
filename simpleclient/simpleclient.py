@@ -139,7 +139,7 @@ class Stream:
             return self._response.get(number, {})
 
     def parse_status(self, status):
-        self._response['status'] = status.replace('/', ' ').split(None, 3)
+        self._response['status'] = status.replace('/', ' ', 1).split(None, 3)
 
     def getprotocol(self):
         return self._response['status'][0]
