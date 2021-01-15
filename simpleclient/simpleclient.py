@@ -90,7 +90,8 @@ class Stream:
     def _parse_response(self):
         self._open()
         if self._secure:
-            context    = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            hasattr(ssl, 'PROTOCOL_TLS') or setattr(ssl, 'PROTOCOL_TLS', ssl.PROTOCOL_SSLv23)
+            context    = ssl.SSLContext(ssl.PROTOCOL_TLS)
             self._sock = context.wrap_socket(self._sock, server_hostname=self._host)
         try:
             self._sock.connect((self._host, self._port))
