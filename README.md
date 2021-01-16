@@ -1,6 +1,10 @@
 # simpleclient
 simpleclient "Python Simple HTTP Client" is a simple [guzzle](https://github.com/guzzle/guzzle)-like library built on top of The Standard Python Library. Unlike guzzle, simpleclient is smaller, and not full of features. It is compatible with Python 2.x and 3.x. There is also a [php-simple-client](https://github.com/nggit/php-simple-client) written in PHP.
 
+## Install
+```
+pip install simpleclient
+```
 ## Quick Start
 ```python
 import simpleclient
