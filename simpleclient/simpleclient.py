@@ -140,7 +140,7 @@ class Stream:
             return self._response.get(number, {})
 
     def parse_status(self, status):
-        self._response['status'] = status.replace('/', ' ', 1).split(None, 3)
+        self._response['status'] = (status.replace('/', ' ', 1).split(None, 3) + ['', '', '', ''])[:4]
 
     def getprotocol(self):
         return self._response['status'][0]
@@ -161,7 +161,7 @@ class Stream:
         if header is None:
             return list(self._response.values())[-1]['header']
         else:
-            return list(self._response.values())[-1]['headers'].get(header)
+            return list(self._response.values())[-1]['headers'].get(header, '')
 
     def getbody(self):
         return list(self._response.values())[-1]['body']
