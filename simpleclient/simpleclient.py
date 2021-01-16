@@ -100,7 +100,7 @@ class Stream:
             self._close()
             sys.exit(1)
         self._sock.send(self._request['options']['message'].encode())
-        self._request['options']['headers'] = {} # destroy the previous request options
+        self._request['options']['headers'].clear() # destroy the previous request options
         next = len(self._response)
         self._response[next] = {'headers': {}, 'header': '', 'body': ''}
         cookies  = []
@@ -122,10 +122,11 @@ class Stream:
             self._response[next]['body'] += line
         if cookies != []:
             cookie = self.parse_cookie('; '.join(cookies))
-            if 'domain' in cookie:
-                domain = cookie['domain']
-            else:
-                domain = self._host
+            domain = self._host
+            for name in cookie:
+                if name.lower() == 'domain':
+                    domain = cookie[name]
+                    break
             if domain in self._request['cookie']:
                 self._request['cookie'][domain].update(cookie)
             else:
@@ -192,10 +193,15 @@ class Stream:
             else:
                 if 'Content-Type' not in self._request['headers']:
                     self._request['headers']['Content-Type'] = 'Content-Type: application/x-www-form-urlencoded'
-        self._request['options']['headers']['Content-Length'] = 'Content-Length: %d' % len(data)
+        if data == '':
+            if 'Content-Type' in self._request['headers']:
+                del self._request['headers']['Content-Type']
+        else:
+            self._request['options']['headers']['Content-Length'] = 'Content-Length: %d' % len(data)
         for domain in self._request['cookie']:
             if self._host[-len(domain):] == domain:
                 self._request['options']['headers']['Cookie'] = 'Cookie: %s' % urlencode(self._request['cookie'][domain]).replace('&', '; ')
+                break
         self._request['headers']['Host'] = 'Host: %s' % self._host
         self._request['options']['headers'].update(self._request['headers'])
         self._request['options']['message'] = '%s %s HTTP/1.0\r\n%s\r\n\r\n%s' % (
@@ -213,8 +219,8 @@ class Stream:
             self._redirscount += 1
             return (self.setheaders(['Referer: %s' % self._url])
                         .seturl(self._realurl(response['headers']['Location']))
-                        .request().send())
+                        .send())
         else:
             self.parse_status(self.getheader(0)) # last status
             self._redirscount = 0
-            return self
+            return self.setheaders(['Referer: %s' % self._url])
