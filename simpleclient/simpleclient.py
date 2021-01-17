@@ -207,7 +207,7 @@ class Stream:
         self._request['options']['message'] = '%s %s HTTP/1.0\r\n%s\r\n\r\n%s' % (
                                                method, self._path, '\r\n'.join(list(self._request['options']['headers'].values())), data)
         if self._debug is True:
-            print('%s----------------' % self._request['options']['message'])
+            print('%s\r\n----------------' % self._request['options']['message'].rstrip())
         return self
 
     def send(self):
