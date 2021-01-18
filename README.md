@@ -63,4 +63,15 @@ print(client.getprotocolversion()) # 1.1
 print(client.getstatuscode())      # 200
 print(client.getreasonphrase())    # OK
 ```
+## Debug
+You can enable debug mode. This will allow you to monitor the request header being sent.
+```python
+client = simpleclient.Stream(True)
+client.seturl('https://www.google.com/') # required to set an url
+client.request('HEAD')
+client.send()
+
+# finally, show the response
+print(client.getheader())
+```
 And other features to hack like the getresponse() method.
