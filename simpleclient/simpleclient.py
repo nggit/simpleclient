@@ -35,6 +35,7 @@ class Stream:
     def _open(self):
         if self._sock is None:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             self._sock.settimeout(self._timeout)
 
     def _close(self):
