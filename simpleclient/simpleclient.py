@@ -119,8 +119,7 @@ class Stream:
                     cookies += [value]
                 self._response[next]['headers'][name] = value
             self._response[next]['header'] += line
-        for line in response:
-            self._response[next]['body'] += line
+        self._response[next]['body'] = response.read()
         if cookies != []:
             cookie = self.parse_cookie('; '.join(cookies))
             domain = self._host
