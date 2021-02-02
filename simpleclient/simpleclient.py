@@ -83,10 +83,8 @@ class Stream:
         return self
 
     def parse_cookie(self, cookie):
-        cookies = {}
         for name, value in parse_qs(cookie).items():
-            cookies[name.lstrip()] = value[-1]
-        return cookies
+            yield name.lstrip(), value[-1]
 
     def _parse_response(self):
         self._open()
@@ -121,12 +119,12 @@ class Stream:
             self._response[next]['header'] += line
         self._response[next]['body'] = response.read()
         if cookies != []:
-            cookie = self.parse_cookie('; '.join(cookies))
+            cookie = {}
             domain = self._host
-            for name in cookie:
+            for name, value in self.parse_cookie('; '.join(cookies)):
+                cookie[name] = value
                 if name.lower() == 'domain':
-                    domain = cookie[name]
-                    break
+                    domain = value
             if domain in self._request['cookie']:
                 self._request['cookie'][domain].update(cookie)
             else:
