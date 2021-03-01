@@ -14,20 +14,23 @@ else:
     from urllib import urlencode
 
 class Stream:
-    def __init__(self, debug=False, maxredirs=-1, timeout=None):
+    def __init__(self, debug=False, maxredirs=-1, timeout=None, close=True):
         self._debug       = debug
         self._maxredirs   = maxredirs
         self._timeout     = timeout
+        self._close       = close
         self._secure      = False
-        self._url         = 'http://localhost/'
+        self._url         = 'http://localhost:80/'
         self._host        = 'localhost'
         self._port        = 80
+        self._netloc      = 'localhost:80'
+        self._referer     = ''
         self._path        = '/'
         self._sock        = None
         self._redirscount = 0
         self._request     = {
             'cookie': {},
-            'headers': {'Connection': 'Connection: close'},
+            'headers': {'Connection': 'Connection: keep-alive'},
             'options': {'headers': {}}
         }
         self._response    = {'status': []}
@@ -37,15 +40,29 @@ class Stream:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             self._sock.settimeout(self._timeout)
+            if self._secure:
+                hasattr(ssl, 'PROTOCOL_TLS') or setattr(ssl, 'PROTOCOL_TLS', ssl.PROTOCOL_SSLv23)
+                context    = ssl.SSLContext(ssl.PROTOCOL_TLS)
+                self._sock = context.wrap_socket(self._sock, server_hostname=self._host)
+            try:
+                self._sock.connect((self._host, self._port))
+            except Exception:
+                print("Failed to connect to '%s' port '%d'" % (self._host, self._port))
+                self.close()
+                sys.exit(1)
 
-    def _close(self):
+    def close(self):
         if self._sock is not None:
             self._sock.close()
             self._sock = None
 
     def setheaders(self, headers=[]):
         for header in headers:
-            self._request['headers'][header[:header.index(':')].title()] = header
+            colon_pos = header.index(':')
+            name      = header[:colon_pos].title()
+            if name == 'Referer':
+                self._referer = header[colon_pos:].lstrip(': ')
+            self._request['headers'][name] = header
         return self
 
     def seturl(self, url):
@@ -57,17 +74,14 @@ class Stream:
             raise Exception('Invalid host')
         else:
             self._host = parse_url.hostname
+        self._netloc = parse_url.netloc
         self._secure = parse_url.scheme.lower() == 'https'
         if self._secure:
-            if parse_url.port is None:
-                self._port = 443
-            else:
-                self._port = parse_url.port
+            self._port = 443
         else:
-            if parse_url.port is None:
-                self._port = 80
-            else:
-                self._port = parse_url.port
+            self._port = 80
+        if parse_url.port is not None:
+            self._port = parse_url.port
         if parse_url.path == '':
             self._path = '/'
         else:
@@ -87,17 +101,6 @@ class Stream:
             yield name.lstrip(), value[-1]
 
     def _parse_response(self):
-        self._open()
-        if self._secure:
-            hasattr(ssl, 'PROTOCOL_TLS') or setattr(ssl, 'PROTOCOL_TLS', ssl.PROTOCOL_SSLv23)
-            context    = ssl.SSLContext(ssl.PROTOCOL_TLS)
-            self._sock = context.wrap_socket(self._sock, server_hostname=self._host)
-        try:
-            self._sock.connect((self._host, self._port))
-        except Exception:
-            print("Failed to connect to '%s' port '%d'" % (self._host, self._port))
-            self._close()
-            sys.exit(1)
         self._sock.send(self._request['options']['message'].encode())
         self._request['options']['headers'].clear() # destroy the previous request options
         next = len(self._response)
@@ -117,7 +120,13 @@ class Stream:
                     cookies += [value]
                 self._response[next]['headers'][name] = value
             self._response[next]['header'] += line
-        self._response[next]['body'] = response.read()
+        if self._response[next]['header'] != '' and 'Location' not in self._response[next]['headers']:
+            self._response[next]['body'] = response.read()
+        response.close()
+        if self._response[next]['header'] == '': # trigger a retry
+            self.close()
+            self._response[next]['headers']['Location'] = self._url
+            self._url                                   = self._referer
         if cookies != []:
             cookie = {}
             domain = self._host
@@ -129,7 +138,6 @@ class Stream:
                 self._request['cookie'][domain].update(cookie)
             else:
                 self._request['cookie'][domain] = cookie
-        self._close()
         return self._response[next]
 
     def getresponse(self, number=None):
@@ -167,7 +175,7 @@ class Stream:
 
     def _realurl(self, url):
         if not url.find('://') > 0: # relative url
-            path_pos = self._url.index(self._host) + len(self._host)
+            path_pos = self._url.index(self._netloc) + len(self._netloc)
             if url[0] == '/':
                 url = self._url[:path_pos] + url
             else:
@@ -209,6 +217,9 @@ class Stream:
         return self
 
     def send(self):
+        if urlsplit(self._referer).netloc != self._netloc:
+            self.close()
+        self._open()
         if self._request['options']['headers'] == {}:
             self.request()
         response = self._parse_response()
@@ -220,5 +231,7 @@ class Stream:
                         .send())
         else:
             self.parse_status(self.getheader(0)) # last status
+            if self._close:
+                self.close()
             self._redirscount = 0
             return self.setheaders(['Referer: %s' % self._url])
