@@ -47,7 +47,7 @@ class Stream:
             try:
                 self._sock.connect((self._host, self._port))
             except Exception:
-                print("Failed to connect to '%s' port '%d'" % (self._host, self._port))
+                print('Failed to connect to %s port %d' % (self._host, self._port))
                 self.close()
                 sys.exit(1)
 
@@ -67,11 +67,11 @@ class Stream:
 
     def seturl(self, url):
         if not url.find('://') > 0:
-            raise Exception('Invalid url or not an absolute url')
+            raise Exception('Invalid URL or not an absolute URL')
         self._url = url
         parse_url = urlsplit(url)
         if parse_url.hostname is None:
-            raise Exception('Invalid host')
+            raise Exception('Invalid Host')
         else:
             self._host = parse_url.hostname
         self._netloc = parse_url.netloc
@@ -85,11 +85,11 @@ class Stream:
         if parse_url.path == '':
             self._path = '/'
         else:
-            self._path = parse_url.path + parse_url.query
+            self._path = (parse_url.path + '?' + parse_url.query).rstrip('?')
         return self
 
     def setmaxredirs(self, maxredirs=-1):
-        self._setmaxredirs = maxredirs
+        self._maxredirs = maxredirs
         return self
 
     def settimeout(self, timeout=None):
@@ -103,10 +103,10 @@ class Stream:
     def _parse_response(self):
         self._sock.send(self._request['options']['message'].encode())
         self._request['options']['headers'].clear() # destroy the previous request options
-        next = len(self._response)
+        next                 = len(self._response)
         self._response[next] = {'headers': {}, 'header': '', 'body': ''}
-        cookies  = []
-        response = self._sock.makefile()
+        cookies              = []
+        response             = self._sock.makefile()
         for line in response:
             if line.rstrip() == '':
                 break
