@@ -199,6 +199,8 @@ class Stream:
             else:
                 if 'Content-Type' not in self._request['headers']:
                     self._request['headers']['Content-Type'] = 'Content-Type: application/x-www-form-urlencoded'
+        elif method.upper() == 'HEAD':
+            self.setmaxredirs(0)
         if data == '':
             if 'Content-Type' in self._request['headers']:
                 del self._request['headers']['Content-Type']
