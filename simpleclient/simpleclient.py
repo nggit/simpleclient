@@ -102,7 +102,6 @@ class Stream:
 
     def _parse_response(self):
         self._sock.send(self._request['options']['message'].encode())
-        self._request['options']['headers'].clear() # destroy the previous request options
         next                 = len(self._response)
         self._response[next] = {'headers': {}, 'header': '', 'body': ''}
         cookies              = []
@@ -127,6 +126,8 @@ class Stream:
             self.close()
             self._response[next]['headers']['Location'] = self._url
             self._url                                   = self._referer
+        else:
+            self._request['options']['headers'].clear() # destroy the previous request options
         if cookies != []:
             cookie = {}
             domain = self._host
