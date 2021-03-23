@@ -21,7 +21,7 @@ client.send()
 ```python
 print(client.getheader())
 # HTTP/1.1 200 OK
-# Date: Mon, 14 Jan 2020 14:14:48 GMT
+# Date: Mon, 14 Jan 2021 14:14:48 GMT
 # Expires: -1
 # Cache-Control: private, max-age=0
 # Content-Type: text/html; charset=UTF-8
@@ -66,7 +66,7 @@ print(client.getreasonphrase())    # OK
 ## Debug
 You can enable debug mode. This will allow you to monitor the request header being sent.
 ```python
-client = simpleclient.Stream(True)
+client = simpleclient.Stream(debug=True)
 client.seturl('https://www.google.com/') # required to set an url
 client.request('HEAD')
 client.send()

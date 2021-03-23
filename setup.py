@@ -8,7 +8,7 @@ with open('README.md') as fh:
 setup(
     name='simpleclient',
     packages=['simpleclient'],
-    version='0.0.4',
+    version='0.0.5',
     license='MIT',
     author='nggit',
     author_email='contact@anggit.com',
@@ -20,6 +20,7 @@ setup(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
         'Topic :: System :: Networking',
     ],
 )
